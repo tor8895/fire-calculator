@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#F2F2F7">
+    <title>FIRE 試算</title>
+    
+    <link rel="manifest" href="manifest.json">
+    
+    <link rel="apple-touch-icon" href="icon.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+    <style>
+        :root {
+            --primary-color: #007AFF;
+            --secondary-color: #5856D6;
+            --background-color: #F2F2F7;
+            --card-color: #FFFFFF;
+            --text-primary: #1C1C1E;
+            --text-secondary: #8E8E93;
+            --border-radius: 16px;
+            --input-bg: #F5F5F5;
+            --divider-color: #E5E5EA;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--background-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            color: var(--text-primary);
+        }
+
+        .container {
+            background-color: var(--card-color);
+            width: 100%;
+            max-width: 460px;
+            padding: 25px;
+            border-radius: var(--border-radius);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+            /* 防止底部被手機 Home Bar 遮擋 */
+            margin-bottom: constant(safe-area-inset-bottom);
+            margin-bottom: env(safe-area-inset-bottom);
+        }
+
+        h1 {
+            font-size: 22px;
+            font-weight: 800;
+            margin-bottom: 20px;
+            text-align: center;
+            color: var(--text-primary);
+        }
+
+        .section-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin: 20px 0 10px 0;
+            padding-bottom: 5px;
+            border-bottom: 1px solid var(--divider-color);
+        }
+
+        .input-group { margin-bottom: 15px; }
+
+        label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: #333;
+        }
+
+        .value-display { color: var(--primary-color); font-weight: 700; }
+        .inflation-display { color: var(--secondary-color); }
+
+        input[type="number"] {
+            width: 100%;
+            padding: 12px 14px; /* 加大觸控區域 */
+            border: 1px solid transparent;
+            background-color: var(--input-bg);
+            border-radius: 10px;
+            font-size: 16px;
+            outline: none;
+        }
+
+        input[type="number"]:focus {
+            background-color: #fff;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+        }
+
+        input[type="range"] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 6px;
+            background: #e1e1e1;
+            border-radius: 5px;
+            outline: none;
+            margin-top: 8px;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 24px; /* 加大滑塊 */
+            height: 24px;
+            border-radius: 50%;
+            background: #fff;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.15); 
+            cursor: pointer;
+        }
+
+        #annualRate::-webkit-slider-thumb { background: var(--primary-color); }
+        #inflationRate::-webkit-slider-thumb { background: var(--secondary-color); }
+        #yearsToGrow::-webkit-slider-thumb { background: #34C759; }
+
+        .unit-hint { font-size: 12px; color: #999; margin-top: 4px; text-align: right; }
+
+        .result-container {
+            margin-top: 25px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .result-card {
+            background-color: #F9F9F9;
+            border-radius: 12px;
+            padding: 16px;
+            border: 1px solid rgba(0,0,0,0.03);
+        }
+
+        .result-card.highlight {
+            background: linear-gradient(135deg, #007AFF 0%, #0055b3 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(0, 122, 255, 0.25);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+        }
+        
+        .result-card.highlight .card-header { border-bottom: 1px solid rgba(255,255,255,0.2); }
+        .card-title { font-size: 14px; font-weight: 700; opacity: 0.9; }
+
+        .comparison-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        
+        .comp-label { font-size: 13px; opacity: 0.8; }
+        .comp-value { font-size: 16px; font-weight: 700; }
+        .big-value { font-size: 24px; font-weight: 800; text-align: right; margin-top: 5px; }
+        .sub-text { font-size: 11px; opacity: 0.7; text-align: right; }
+
+        .reset-btn {
+            display: block;
+            width: 100%;
+            padding: 14px;
+            margin-top: 20px;
+            background-color: transparent;
+            color: var(--text-secondary);
+            border: 1px solid #e1e1e1;
+            border-radius: 10px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        
+        /* 安裝提示區塊 (僅在可安裝時顯示，需搭配 JS，此處簡化隱藏) */
+        #installPrompt { display: none; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>FIRE 試算</h1>
+
+    <div class="section-title">資產投入設定</div>
+    <div class="input-group">
+        <label>初始本金 (萬元)</label>
+        <input type="number" id="initialPrincipal" placeholder="0" min="0" step="1">
+    </div>
+
+    <div class="input-group">
+        <label>每月定期定額 (萬元)</label>
+        <input type="number" id="monthlyContribution" placeholder="0" min="0" step="0.1">
+    </div>
+
+    <div class="input-group">
+        <label>預期年化報酬率 <span class="value-display" id="rateDisplay">6%</span></label>
+        <input type="range" id="annualRate" min="1" max="15" value="6" step="0.5">
+    </div>
+
+    <div class="input-group">
+        <label>距離退休年數 <span class="value-display" id="yearsDisplay">30年</span></label>
+        <input type="range" id="yearsToGrow" min="1" max="50" value="30" step="1">
+    </div>
+    
+    <div class="section-title">環境變數</div>
+    <div class="input-group">
+        <label>預估平均通膨率 <span class="value-display inflation-display" id="inflationDisplay">2%</span></label>
+        <input type="range" id="inflationRate" min="0" max="8" value="2" step="0.5">
+    </div>
+
+    <div class="result-container">
+        <div class="result-card highlight">
+            <div class="card-header"><span class="card-title">累積總資產</span></div>
+            <div class="comparison-row"><span class="comp-label">帳面數值</span></div>
+            <div class="big-value" id="nominalTotal">NT$ 0</div>
+            <div style="margin: 10px 0; border-top: 1px solid rgba(255,255,255,0.2);"></div>
+            <div class="comparison-row"><span class="comp-label">實質購買力</span></div>
+            <div class="big-value" id="realTotal" style="font-size: 20px; opacity: 0.9;">NT$ 0</div>
+        </div>
+
+        <div class="result-card">
+            <div class="card-header">
+                <span class="card-title" style="color:#007AFF;">每月被動收入</span>
+                <span class="sub-text">含帳面與實質對照</span>
+            </div>
+            <div class="comparison-row" style="margin-top:5px;">
+                <span class="comp-label" style="font-weight:700; color:#333;">4% 法則 (積極)</span>
+            </div>
+            <div class="comparison-row">
+                <span class="comp-label">帳面領回</span>
+                <span class="comp-value" style="color:#007AFF;" id="nominalMonthly4">NT$ 0</span>
+            </div>
+            <div class="comparison-row">
+                <span class="comp-label">實質購買力</span>
+                <span class="comp-value" style="color:#5856D6;" id="realMonthly4">NT$ 0</span>
+            </div>
+            <div style="margin: 10px 0; border-top: 1px solid #eee;"></div>
+            <div class="comparison-row">
+                <span class="comp-label" style="font-weight:700; color:#333;">3% 法則 (保守)</span>
+            </div>
+            <div class="comparison-row">
+                <span class="comp-label">帳面領回</span>
+                <span class="comp-value" style="color:#007AFF;" id="nominalMonthly3">NT$ 0</span>
+            </div>
+            <div class="comparison-row">
+                <span class="comp-label">實質購買力</span>
+                <span class="comp-value" style="color:#5856D6;" id="realMonthly3">NT$ 0</span>
+            </div>
+        </div>
+    </div>
+    
+    <button class="reset-btn" onclick="resetCalculator()">重置所有數值</button>
+</div>
+
+<script>
+    // Service Worker 註冊
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('./sw.js')
+                .then(registration => {
+                    console.log('SW registered:', registration);
+                })
+                .catch(error => {
+                    console.log('SW registration failed:', error);
+                });
+        });
+    }
+
+    // 計算機邏輯
+    const initialInput = document.getElementById('initialPrincipal');
+    const monthlyInput = document.getElementById('monthlyContribution');
+    const rateInput = document.getElementById('annualRate');
+    const yearsInput = document.getElementById('yearsToGrow');
+    const inflationInput = document.getElementById('inflationRate');
+    
+    const rateDisplay = document.getElementById('rateDisplay');
+    const yearsDisplay = document.getElementById('yearsDisplay');
+    const inflationDisplay = document.getElementById('inflationDisplay');
+    
+    const nominalTotalEl = document.getElementById('nominalTotal');
+    const realTotalEl = document.getElementById('realTotal');
+    const nominalMonthly4El = document.getElementById('nominalMonthly4');
+    const realMonthly4El = document.getElementById('realMonthly4');
+    const nominalMonthly3El = document.getElementById('nominalMonthly3');
+    const realMonthly3El = document.getElementById('realMonthly3');
+
+    const formatter = new Intl.NumberFormat('zh-TW', {
+        style: 'currency',
+        currency: 'TWD',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+    });
+
+    function calculate() {
+        let P = (parseFloat(initialInput.value) || 0) * 10000;
+        let PMT = (parseFloat(monthlyInput.value) || 0) * 10000;
+        let rate = parseFloat(rateInput.value);
+        let years = parseFloat(yearsInput.value);
+        let inflation = parseFloat(inflationInput.value);
+
+        rateDisplay.textContent = rate + '%';
+        yearsDisplay.textContent = years + '年';
+        inflationDisplay.textContent = inflation + '%';
+
+        let r = rate / 100 / 12; 
+        let n = years * 12;
+        let futureValue = 0;
+
+        if (rate === 0) {
+            futureValue = P + (PMT * n);
+        } else {
+            let compoundFactor = Math.pow(1 + r, n);
+            futureValue = (P * compoundFactor) + (PMT * ((compoundFactor - 1) / r));
+        }
+
+        let discountFactor = Math.pow(1 + (inflation / 100), years);
+        let realValue = futureValue / discountFactor;
+
+        nominalTotalEl.textContent = formatter.format(futureValue);
+        realTotalEl.textContent = formatter.format(realValue);
+        nominalMonthly4El.textContent = formatter.format((futureValue * 0.04) / 12);
+        realMonthly4El.textContent = formatter.format((realValue * 0.04) / 12);
+        nominalMonthly3El.textContent = formatter.format((futureValue * 0.03) / 12);
+        realMonthly3El.textContent = formatter.format((realValue * 0.03) / 12);
+    }
+
+    function resetCalculator() {
+        initialInput.value = '';
+        monthlyInput.value = '';
+        rateInput.value = 6;
+        yearsInput.value = 30;
+        inflationInput.value = 2;
+        calculate();
+    }
+
+    [initialInput, monthlyInput, rateInput, yearsInput, inflationInput].forEach(input => {
+        input.addEventListener('input', calculate);
+    });
+
+    calculate();
+</script>
+
+</body>
+</html>
